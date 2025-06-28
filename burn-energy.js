@@ -1,5 +1,3 @@
-// burn-energy.js
-
 module.exports = async function runBurnEnergy(page) {
   // 🟧 FASHION ARENA
   let arenaEnergy = 1;
@@ -159,5 +157,43 @@ module.exports = async function runBurnEnergy(page) {
       console.log(`⚠️ Judge cycle ${completed + 1} failed: ${e.message}`);
       await page.screenshot({ path: `bp-error-${completed + 1}.png`, fullPage: true });
     }
+  }
+
+  // 🎟️ Compete with Tickets
+  console.log("🎟️ Checking ticket count to decide if we should compete...");
+
+  const getTicketCount = async () => {
+    const ticketText = await page.innerText('.bp-pass-amount');
+    return parseInt(ticketText.trim());
+  };
+
+  let tickets = await getTicketCount();
+  console.log(`🎟️ You have ${tickets} tickets.`);
+
+  if (tickets > 99) {
+    while (tickets > 0) {
+      try {
+        console.log(`🧨 Using ticket ${tickets}... clicking compete button.`);
+        await page.click('#competeInDuel', { timeout: 5000 });
+        await page.waitForTimeout(6000);
+
+        await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', {
+          waitUntil: 'domcontentloaded',
+          timeout: 60000
+        });
+        await page.waitForTimeout(5000);
+
+        tickets = await getTicketCount();
+        console.log(`🎟️ Tickets remaining: ${tickets}`);
+      } catch (e) {
+        console.log(`⚠️ Error using ticket: ${e.message}`);
+        await page.screenshot({ path: `bp-ticket-error-${tickets}.png`, fullPage: true });
+        break;
+      }
+    }
+
+    console.log("🎯 All tickets used or error occurred.");
+  } else {
+    console.log(`🚫 Not enough tickets to compete. Skipping. Need at least 100, have ${tickets}.`);
   }
 };
