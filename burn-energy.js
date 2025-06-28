@@ -170,7 +170,7 @@ module.exports = async function runBurnEnergy(page) {
   let tickets = await getTicketCount();
   console.log(`🎟️ You have ${tickets} tickets.`);
 
-  if (tickets > 99) {
+  if (tickets > 97) {
     while (tickets > 0) {
       try {
         console.log(`🧨 Using ticket ${tickets}... clicking compete button.`);
@@ -194,6 +194,6 @@ module.exports = async function runBurnEnergy(page) {
 
     console.log("🎯 All tickets used or error occurred.");
   } else {
-    console.log(`🚫 Not enough tickets to compete. Skipping. Need at least 100, have ${tickets}.`);
+    console.log(`🚫 Not enough tickets to compete. Skipping. Need at least 98, have ${tickets}.`);
   }
 };
