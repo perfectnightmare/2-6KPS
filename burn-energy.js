@@ -160,7 +160,7 @@ module.exports = async function runBurnEnergy(page) {
   }
 
   // 🎟️ Compete with Tickets
-  console.log("🎟️ Checking ticket count to decide if we should compete...");
+  console.log("🎟️ Checking ticket count to decide how many to use...");
 
   const getTicketCount = async () => {
     const ticketText = await page.innerText('.bp-pass-amount');
@@ -170,8 +170,11 @@ module.exports = async function runBurnEnergy(page) {
   let tickets = await getTicketCount();
   console.log(`🎟️ You have ${tickets} tickets.`);
 
-  if (tickets > 97) {
-    while (tickets > 0) {
+  let ticketsToUse = tickets - 97;
+
+  if (ticketsToUse > 0) {
+    console.log(`🎯 Using ${ticketsToUse} ticket(s)...`);
+    while (ticketsToUse > 0) {
       try {
         console.log(`🧨 Using ticket ${tickets}... clicking compete button.`);
         await page.click('#competeInDuel', { timeout: 5000 });
@@ -184,7 +187,8 @@ module.exports = async function runBurnEnergy(page) {
         await page.waitForTimeout(5000);
 
         tickets = await getTicketCount();
-        console.log(`🎟️ Tickets remaining: ${tickets}`);
+        ticketsToUse--;
+        console.log(`🎟️ Tickets remaining: ${tickets}. Tickets left to use: ${ticketsToUse}`);
       } catch (e) {
         console.log(`⚠️ Error using ticket: ${e.message}`);
         await page.screenshot({ path: `bp-ticket-error-${tickets}.png`, fullPage: true });
@@ -192,8 +196,8 @@ module.exports = async function runBurnEnergy(page) {
       }
     }
 
-    console.log("🎯 All tickets used or error occurred.");
+    console.log("✅ Finished using excess tickets.");
   } else {
-    console.log(`🚫 Not enough tickets to compete. Skipping. Need at least 98, have ${tickets}.`);
+    console.log(`🚫 Tickets are ${tickets}. Not more than 97. Skipping.`);
   }
 };
