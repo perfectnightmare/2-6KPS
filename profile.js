@@ -1,17 +1,16 @@
 module.exports = async function scrapeProfileInfo(page) {
   try {
+    const profileUrl = process.env.PROFILE_URL;
     console.log("🧭 Navigating to profile page...");
-    await page.goto('https://v3.g.ladypopular.com/profile.php?id=7709322', {
+    await page.goto(profileUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 60000
     });
 
-    // Click on the "About" button
     await page.waitForSelector('a.btn-round.btn-white.btn-s.active', { timeout: 15000 });
     await page.click('a.btn-round.btn-white.btn-s.active');
-    await page.waitForTimeout(3000); // wait for content to appear
+    await page.waitForTimeout(3000);
 
-    // Extract Fashion Arena and Beauty Pageant info
     const fashionInfo = await page.evaluate(() => {
       const el = [...document.querySelectorAll('.duel-stat')]
         .find(e => e.textContent.includes('Fashion Arena'));
@@ -24,7 +23,6 @@ module.exports = async function scrapeProfileInfo(page) {
       return el?.nextSibling?.textContent?.trim() || 'Not found';
     });
 
-    // Extract stats
     const statNames = ['Elegance', 'Creativity', 'Kindness', 'Loyalty', 'Confidence', 'Grace'];
     const stats = {};
 
@@ -35,20 +33,18 @@ module.exports = async function scrapeProfileInfo(page) {
           el => el.textContent.trim()
         );
         stats[name] = value;
-      } catch (e) {
+      } catch {
         stats[name] = 'N/A';
       }
     }
 
-    // Extract Emeralds
     let emeralds = 'N/A';
     try {
       emeralds = await page.$eval('#player-emeralds', el => el.textContent.trim());
-    } catch (e) {
+    } catch {
       console.log("⚠️ Could not extract emeralds.");
     }
 
-    // Print results
     console.log("\n📄 PROFILE SUMMARY");
     console.log("🎽 Fashion Arena:", fashionInfo);
     console.log("💃 Beauty Pageant:", beautyInfo);
@@ -60,7 +56,6 @@ module.exports = async function scrapeProfileInfo(page) {
 
     console.log(`\n💎 Emeralds: ${emeralds}`);
 
-    // Go to ranking page
     console.log("\n📈 Navigating to ranking page...");
     await page.goto('https://v3.g.ladypopular.com/ranking/players.php', {
       waitUntil: 'domcontentloaded',
