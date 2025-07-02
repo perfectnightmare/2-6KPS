@@ -17,18 +17,11 @@ module.exports = async function runAds(page) {
   await page.waitForSelector('ul.ads-card-lists', { timeout: 20000 });
 
   // Step 3: Try to click an ad by priority
-  const priorities = [
-    'diamonds',
-    'emeralds',
-    'energy-orange',
-    'dollars',
-  ];
-
+  const priorities = ['diamonds', 'emeralds', 'energy-orange', 'dollars'];
   let adClicked = false;
 
   for (const type of priorities) {
     const selector = `button[data-type="${type}"][data-ad-cooldown="0"]`;
-
     const adAvailable = await page.$(selector);
     if (adAvailable) {
       console.log(`✅ Clicking on "${type}" ad...`);
@@ -49,7 +42,7 @@ module.exports = async function runAds(page) {
   console.log("▶️ Waiting for ad to start...");
   const adPlayerAppeared = await page.waitForSelector('#player', {
     timeout: 60000,
-    state: 'attached' // Waits for it to exist, even if not yet visible
+    state: 'attached'
   }).catch(() => null);
 
   if (!adPlayerAppeared) {
