@@ -45,13 +45,23 @@ module.exports = async function runAds(page) {
     return;
   }
 
-  // Step 4: Wait for ad player to disappear
+  // Step 4: Wait for ad player to appear
   console.log("▶️ Waiting for ad to start...");
-  await page.waitForSelector('#player', { timeout: 30000 });
+  const adPlayerAppeared = await page.waitForSelector('#player', {
+    timeout: 60000,
+    state: 'attached' // Waits for it to exist, even if not yet visible
+  }).catch(() => null);
+
+  if (!adPlayerAppeared) {
+    console.log("❌ Ad player never appeared. Skipping.");
+    return;
+  }
+
+  // Step 5: Wait for ad to finish (player element disappears)
   console.log("⏳ Waiting for ad to finish...");
   await page.waitForSelector('#player', { state: 'detached', timeout: 180000 });
 
-  // Step 5: Post-ad cooldown
+  // Step 6: Post-ad cooldown
   console.log("⏸️ Ad finished. Waiting 10 seconds...");
   await page.waitForTimeout(10000);
 
