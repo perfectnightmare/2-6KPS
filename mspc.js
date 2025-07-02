@@ -8,6 +8,7 @@ const runMapsEvent = require('./maps.js');
 const runSlotsEvent = require('./Slots.js');
 const runMemoryEvent = require('./memory.js');
 const runFurnitureScript = require('./furniture.js');
+const runAdsScript = require('./ads.js');
 
 const scripts = [
   { name: 'Burn Energy', fn: runBurnEnergy, alwaysRun: true },
@@ -16,6 +17,7 @@ const scripts = [
   { name: 'Slots Event', fn: runSlotsEvent, envKey: 'LP_SLOTS_URL' },
   { name: 'Memory Event', fn: runMemoryEvent, envKey: 'LP_MEMORY_URL' },
   { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: true },
+  { name: 'Watch 1 Ad', fn: runAdsScript, alwaysRun: true },
 ];
 
 (async () => {
