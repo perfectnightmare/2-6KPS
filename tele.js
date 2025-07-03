@@ -10,7 +10,8 @@ module.exports = async function runTeleportEvent(page) {
   await page.reload();
   await page.waitForTimeout(30000);
 
-  const emeralds = parseInt(await page.textContent('#player-emeralds'));
+  const emeraldText = await page.textContent('#player-emeralds');
+  const emeralds = parseInt(emeraldText.replace(/,/g, ''));
   console.log('💎 Emeralds:', emeralds);
   if (emeralds < 3) {
     console.log('➡️ Not enough emeralds. Exiting teleport script.');
