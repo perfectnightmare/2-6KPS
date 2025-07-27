@@ -7,7 +7,7 @@ const runTeleportEvent = require('./tele.js');
 const runMapsEvent = require('./maps.js');
 const runSlotsEvent = require('./Slots.js');
 const runMemoryEvent = require('./memory.js');
-// const runFurnitureScript = require('./furniture.js');
+const runFurnitureScript = require('./furniture.js');
 const runStatsExtractor = require('./stats.js');
 
 const scripts = [
@@ -16,7 +16,7 @@ const scripts = [
   { name: 'Maps Event', fn: runMapsEvent, envKey: 'LP_MAPS_URL' },
   { name: 'Slots Event', fn: runSlotsEvent, envKey: 'LP_SLOTS_URL' },
   { name: 'Memory Event', fn: runMemoryEvent, envKey: 'LP_MEMORY_URL' },
-  // { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: true },
+  { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: true },
   { name: 'Stats Extractor', fn: runStatsExtractor, alwaysRun: true },
 ];
 
