@@ -65,27 +65,15 @@ const scripts = [
       }
     }
   }
-
-  // ✅ COOKIE CONSENT (new version: trigger actual listener of #save-and-exit)
-  console.log("🍪 Waiting before handling cookie popup...");
-  await page.waitForTimeout(30000); // wait for popup to appear
-
-  try {
-    const result = await page.evaluate(() => {
-      const btn = document.querySelector('#save-and-exit');
-      if (!btn) return '❌ #save-and-exit button not found';
-      const evts = getEventListeners(btn);
-      if (!evts || !evts.click || !evts.click[0]) return '❌ Click event not found';
-      evts.click[0].listener({ type: 'click' });
-      return '✅ Cookie popup handled using internal click listener.';
-    });
-    console.log(result);
-  } catch (err) {
-    console.log(`❌ Cookie handling failed: ${err.message}`);
-    await page.screenshot({ path: 'cookie-handler-error.png', fullPage: true });
-    await browser.close();
-    return;
-  }
+  
+  console.log("🍪 Waiting 30s for cookie popup...");
+  await page.waitForTimeout(30000);
+  console.log("🍪 Attempting to click #save-and-exit...");
+  await page.evaluate(() => {
+    document.querySelector('#save-and-exit')?.click();
+  });
+  await page.waitForTimeout(5000); // give it time to process
+  console.log("✅ Cookie popup dismissed.");
 
   // ✅ RUN EACH SCRIPT
   for (const script of scripts) {
