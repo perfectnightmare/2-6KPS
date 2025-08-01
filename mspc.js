@@ -66,61 +66,42 @@ const scripts = [
     }
   }
 
-  // ✅ COOKIE CONSENT
+  // ✅ COOKIE CONSENT (allow only)
   async function attemptCookieConsent() {
-    console.log("🍪 Looking for cookie consent button...");
+    console.log("🍪 Trying to set cookie consent to 'allow' using JS...");
 
-    const selectors = [
-      '#accept-all-btn',
-      '[id*="accept"]',
-      '[class*="accept"]',
-      'button:has-text("Accept")',
-      'button:has-text("Accept All")',
-      'button:has-text("Agree")',
-      'button:has-text("Confirm")',
-    ];
-
-    for (const selector of selectors) {
-      try {
-        const button = await page.waitForSelector(selector, { timeout: 5000 });
-        await button.click();
-        console.log(`🍪 Cookie accepted using selector: ${selector}`);
-        return true;
-      } catch {
-        console.log(`🔍 Cookie button not found or failed with selector: ${selector}`);
-      }
-    }
-
-    for (const frame of page.frames()) {
-      for (const selector of selectors) {
-        try {
-          const button = await frame.waitForSelector(selector, { timeout: 3000 });
-          await button.click();
-          console.log(`🍪 Cookie accepted in iframe using selector: ${selector}`);
-          return true;
-        } catch {
-          continue;
+    try {
+      const result = await page.evaluate(() => {
+        if (window.cookieconsent?.setStatus) {
+          window.cookieconsent.setStatus('allow');
+          return '✅ cookieconsent.setStatus("allow") called';
+        } else {
+          return '❌ setStatus not available on cookieconsent';
         }
-      }
-    }
+      });
 
-    console.log("❌ Cookie not accepted. Taking screenshot...");
-    await page.screenshot({ path: 'cookie-error.png', fullPage: true });
-    return false;
+      console.log(result);
+      await page.waitForTimeout(2000);
+      return result.startsWith('✅');
+    } catch (err) {
+      console.log("❌ JS error while setting cookie consent:", err.message);
+      await page.screenshot({ path: 'cookie-error.png', fullPage: true });
+      return false;
+    }
   }
 
   let cookieAccepted = await attemptCookieConsent();
   if (!cookieAccepted) {
-    console.log("🔁 Cookie button not found. Refreshing and retrying...");
+    console.log("🔁 JS cookie bypass failed. Reloading and retrying...");
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForTimeout(5000);
     cookieAccepted = await attemptCookieConsent();
   }
 
   if (!cookieAccepted) {
-    console.log("❌ Failed to accept cookie even after retry. Aborting.");
+    console.log("❌ Failed to accept cookie even after JS retry. Aborting.");
     await browser.close();
-    process.exit(1); // ❗ mark job as failed so screenshots upload
+    process.exit(1);
   }
 
   // ✅ RUN EACH SCRIPT
