@@ -65,15 +65,21 @@ const scripts = [
       }
     }
   }
-  
-  console.log("🍪 Waiting 30s for cookie popup...");
-  await page.waitForTimeout(30000);
-  console.log("🍪 Attempting to click #save-and-exit...");
-  await page.evaluate(() => {
-    document.querySelector('#save-and-exit')?.click();
-  });
-  await page.waitForTimeout(5000); // give it time to process
-  console.log("✅ Cookie popup dismissed.");
+
+  // ✅ COOKIE CONSENT (JS click without selector wait)
+  try {
+    console.log("⏳ Waiting 10 seconds after login...");
+    await page.waitForTimeout(10000);
+
+    console.log("🍪 Clicking #save-and-exit via JS...");
+    await page.evaluate(() => {
+      document.querySelector('#save-and-exit')?.click();
+    });
+    console.log("✅ Cookie consent clicked via JS.");
+  } catch (e) {
+    console.log("❌ Cookie consent JS click failed:", e.message);
+    await page.screenshot({ path: 'cookie-error.png', fullPage: true });
+  }
 
   // ✅ RUN EACH SCRIPT
   for (const script of scripts) {
