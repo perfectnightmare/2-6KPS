@@ -66,18 +66,21 @@ const scripts = [
     }
   }
 
-  // ✅ COOKIE CONSENT (JS click without selector wait)
-  try {
-    console.log("⏳ Waiting 30 seconds after login...");
-    await page.waitForTimeout(30000);
+  // ✅ COOKIE CONSENT via JS
+  console.log("🍪 Clicking #save-and-exit via JS...");
+  const clicked = await page.evaluate(() => {
+    const btn = document.querySelector('#save-and-exit');
+    if (btn) {
+      btn.click();
+      return true;
+    }
+    return false;
+  });
 
-    console.log("🍪 Clicking #save-and-exit via JS...");
-    await page.evaluate(() => {
-      document.querySelector('#save-and-exit')?.click();
-    });
-    console.log("✅ Cookie consent clicked via JS.");
-  } catch (e) {
-    console.log("❌ Cookie consent JS click failed:", e.message);
+  if (clicked) {
+    console.log("✅ Cookie popup dismissed via JS.");
+  } else {
+    console.log("❌ #save-and-exit not found.");
     await page.screenshot({ path: 'cookie-error.png', fullPage: true });
   }
 
