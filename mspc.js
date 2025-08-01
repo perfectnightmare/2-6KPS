@@ -1,41 +1,72 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
-const readline = require('readline');
+
+// ⬇️ Import all sub-scripts (exported as functions)
+const runBurnEnergy = require('./burn-energy.js');
+const runTeleportEvent = require('./tele.js');
+const runMapsEvent = require('./maps.js');
+const runSlotsEvent = require('./Slots.js');
+const runMemoryEvent = require('./memory.js');
+const runFurnitureScript = require('./furniture.js');
+const runStatsExtractor = require('./stats.js');
+
+const scripts = [
+  { name: 'Burn Energy', fn: runBurnEnergy, alwaysRun: true },
+  { name: 'Tele Event', fn: runTeleportEvent, envKey: 'LP_TELEPORT_URL' },
+  { name: 'Maps Event', fn: runMapsEvent, envKey: 'LP_MAPS_URL' },
+  { name: 'Slots Event', fn: runSlotsEvent, envKey: 'LP_SLOTS_URL' },
+  { name: 'Memory Event', fn: runMemoryEvent, envKey: 'LP_MEMORY_URL' },
+  { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: true },
+  { name: 'Stats Extractor', fn: runStatsExtractor, alwaysRun: true },
+];
 
 (async () => {
-  const browser = await chromium.launch({ headless: false });
+  const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
 
   const email = process.env.LP_EMAIL;
   const password = process.env.LP_PASSWORD;
 
-  console.log(`🔐 Opening Lady Popular login page...`);
-  await page.goto('https://ladypopular.com', {
-    waitUntil: 'domcontentloaded',
-    timeout: 60000,
-  });
+  // ✅ LOGIN
+  let loginSuccess = false;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      console.log(`🔐 [Attempt ${attempt}] Opening Lady Popular login page...`);
+      await page.goto('https://ladypopular.com', {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000,
+      });
 
-  console.log("🔎 Waiting for Sign In button...");
-  await page.waitForSelector('#login-btn', { timeout: 30000 });
-  await page.waitForTimeout(3000);
-  await page.click('#login-btn');
+      console.log("🔎 Waiting for Sign In button...");
+      await page.waitForSelector('#login-btn', { timeout: 30000 });
+      await page.waitForTimeout(5000);
+      await page.click('#login-btn');
 
-  console.log("🔐 Entering credentials...");
-  await page.waitForSelector('#login-username-field', { timeout: 10000 });
-  await page.fill('#login-username-field', email);
-  await page.fill('#loginForm3 > div > label:nth-child(2) > input[type=password]', password);
-  await page.waitForTimeout(3000);
-  await page.click('#loginSubmit');
+      console.log("🔐 Entering credentials...");
+      await page.waitForSelector('#login-username-field', { timeout: 10000 });
+      await page.fill('#login-username-field', email);
+      await page.fill('#loginForm3 > div > label:nth-child(2) > input[type=password]', password);
+      await page.waitForTimeout(5000);
+      await page.click('#loginSubmit');
 
-  await page.waitForSelector('#header', { timeout: 15000 });
-  console.log("🎉 Login successful.");
+      await page.waitForSelector('#header', { timeout: 15000 });
+      console.log("🎉 Login successful.");
+      loginSuccess = true;
+      break;
+    } catch (error) {
+      console.log(`❌ Login attempt ${attempt} failed: ${error.message}`);
+      await page.screenshot({ path: `login-error-${attempt}.png`, fullPage: true });
 
-  // Wait 30 seconds for everything to load
-  console.log("⏳ Waiting 30 seconds after login...");
-  await page.waitForTimeout(30000);
+      if (attempt === 5) {
+        console.log("🚫 Max login attempts reached. Aborting.");
+        await browser.close();
+        return;
+      }
+    }
+  }
 
-  // Simulate the exact JS command
+  // ✅ COOKIE CONSENT via JS
   console.log("🍪 Clicking #save-and-exit via JS...");
   const clicked = await page.evaluate(() => {
     const btn = document.querySelector('#save-and-exit');
@@ -53,20 +84,26 @@ const readline = require('readline');
     await page.screenshot({ path: 'cookie-error.png', fullPage: true });
   }
 
-  // ⏸️ Wait for user to press Enter
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+  // ✅ RUN EACH SCRIPT
+  for (const script of scripts) {
+    const shouldRun =
+      script.alwaysRun || (process.env[script.envKey] && process.env[script.envKey] !== '0');
 
-  await new Promise(resolve => {
-    rl.question('\n📴 Press Enter to close browser and end script...', () => {
-      rl.close();
-      resolve();
-    });
-  });
+    if (!shouldRun) {
+      console.log(`⏭️ ${script.name} skipped (not active or URL = 0)`);
+      continue;
+    }
 
-  await page.screenshot({ path: 'final-screen.png', fullPage: true });
+    console.log(`\n🚀 Starting: ${script.name}`);
+    try {
+      await script.fn(page); // Call the script function with shared page
+      console.log(`✅ ${script.name} finished successfully.`);
+    } catch (err) {
+      console.log(`❌ ${script.name} failed: ${err.message}`);
+      await page.screenshot({ path: `${script.name.replace(/\s+/g, '_')}-error.png`, fullPage: true });
+    }
+  }
+
   await browser.close();
-  console.log("✅ Browser closed. Script done.");
+  console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
