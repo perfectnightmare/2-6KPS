@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
+const fs = require('fs');
 
 // ⬇️ Import all sub-scripts (exported as functions)
 const runBurnEnergy = require('./burn-energy.js');
@@ -61,34 +62,54 @@ const scripts = [
       if (attempt === 5) {
         console.log("🚫 Max login attempts reached. Aborting.");
         await browser.close();
-        return;
+        process.exit(1);
       }
     }
   }
 
   // ✅ COOKIE CONSENT
-  const cookieSelectors = [
-    '#accept-all-btn',
-    'button:has-text("Accept All")',
-    'button:has-text("Accept")',
-    'button:has-text("Confirm")',
-    'button:has-text("Agree")',
-  ];
-
   async function attemptCookieConsent() {
     console.log("🍪 Looking for cookie consent button...");
-    for (const selector of cookieSelectors) {
+
+    const selectors = [
+      '#accept-all-btn',
+      '[id*="accept"]',
+      '[class*="accept"]',
+      'button:has-text("Accept")',
+      'button:has-text("Accept All")',
+      'button:has-text("Agree")',
+      'button:has-text("Confirm")',
+    ];
+
+    for (const selector of selectors) {
       try {
-        const button = await page.waitForSelector(selector, { timeout: 10000 });
-        await page.waitForTimeout(15000);
+        const button = await page.waitForSelector(selector, { timeout: 5000 });
         await button.click();
         console.log(`🍪 Cookie accepted using selector: ${selector}`);
-        await page.waitForTimeout(10000);
         return true;
       } catch {
-        console.log(`🔍 Cookie button not found with selector: ${selector}`);
+        console.log(`🔍 Cookie button not found or failed with selector: ${selector}`);
       }
     }
+
+    for (const frame of page.frames()) {
+      for (const selector of selectors) {
+        try {
+          const button = await frame.waitForSelector(selector, { timeout: 3000 });
+          await button.click();
+          console.log(`🍪 Cookie accepted in iframe using selector: ${selector}`);
+          return true;
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    // ❌ If all failed, take screenshot and save HTML
+    console.log("❌ Cookie not accepted. Saving debug files...");
+    await page.screenshot({ path: 'cookie-error.png', fullPage: true });
+    const html = await page.content();
+    fs.writeFileSync('cookie-debug.html', html);
     return false;
   }
 
@@ -102,9 +123,8 @@ const scripts = [
 
   if (!cookieAccepted) {
     console.log("❌ Failed to accept cookie even after retry. Aborting.");
-    await page.screenshot({ path: 'cookie-error.png', fullPage: true });
     await browser.close();
-    return;
+    process.exit(1); // ❗️ Make GitHub Actions treat it as a failed job
   }
 
   // ✅ RUN EACH SCRIPT
@@ -119,11 +139,14 @@ const scripts = [
 
     console.log(`\n🚀 Starting: ${script.name}`);
     try {
-      await script.fn(page); // Call the script function with shared page
+      await script.fn(page);
       console.log(`✅ ${script.name} finished successfully.`);
     } catch (err) {
       console.log(`❌ ${script.name} failed: ${err.message}`);
-      await page.screenshot({ path: `${script.name.replace(/\s+/g, '_')}-error.png`, fullPage: true });
+      await page.screenshot({
+        path: `${script.name.replace(/\s+/g, '_')}-error.png`,
+        fullPage: true,
+      });
     }
   }
 
