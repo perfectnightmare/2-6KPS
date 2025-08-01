@@ -68,8 +68,8 @@ const scripts = [
 
   // ✅ COOKIE CONSENT (JS click without selector wait)
   try {
-    console.log("⏳ Waiting 10 seconds after login...");
-    await page.waitForTimeout(10000);
+    console.log("⏳ Waiting 30 seconds after login...");
+    await page.waitForTimeout(30000);
 
     console.log("🍪 Clicking #save-and-exit via JS...");
     await page.evaluate(() => {
