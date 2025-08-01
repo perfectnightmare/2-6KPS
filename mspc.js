@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
-const fs = require('fs');
 
 // ⬇️ Import all sub-scripts (exported as functions)
 const runBurnEnergy = require('./burn-energy.js');
@@ -105,11 +104,8 @@ const scripts = [
       }
     }
 
-    // ❌ If all failed, take screenshot and save HTML
-    console.log("❌ Cookie not accepted. Saving debug files...");
+    console.log("❌ Cookie not accepted. Taking screenshot...");
     await page.screenshot({ path: 'cookie-error.png', fullPage: true });
-    const html = await page.content();
-    fs.writeFileSync('cookie-debug.html', html);
     return false;
   }
 
@@ -124,7 +120,7 @@ const scripts = [
   if (!cookieAccepted) {
     console.log("❌ Failed to accept cookie even after retry. Aborting.");
     await browser.close();
-    process.exit(1); // ❗️ Make GitHub Actions treat it as a failed job
+    process.exit(1); // ❗ mark job as failed so screenshots upload
   }
 
   // ✅ RUN EACH SCRIPT
@@ -139,7 +135,7 @@ const scripts = [
 
     console.log(`\n🚀 Starting: ${script.name}`);
     try {
-      await script.fn(page);
+      await script.fn(page); // Call the script function with shared page
       console.log(`✅ ${script.name} finished successfully.`);
     } catch (err) {
       console.log(`❌ ${script.name} failed: ${err.message}`);
