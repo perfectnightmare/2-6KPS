@@ -61,47 +61,30 @@ const scripts = [
       if (attempt === 5) {
         console.log("🚫 Max login attempts reached. Aborting.");
         await browser.close();
-        process.exit(1);
+        return;
       }
     }
   }
 
-  // ✅ COOKIE CONSENT (allow only)
-  async function attemptCookieConsent() {
-    console.log("🍪 Trying to set cookie consent to 'allow' using JS...");
+  // ✅ COOKIE CONSENT (new version: trigger actual listener of #save-and-exit)
+  console.log("🍪 Waiting before handling cookie popup...");
+  await page.waitForTimeout(30000); // wait for popup to appear
 
-    try {
-      const result = await page.evaluate(() => {
-        if (window.cookieconsent?.setStatus) {
-          window.cookieconsent.setStatus('allow');
-          return '✅ cookieconsent.setStatus("allow") called';
-        } else {
-          return '❌ setStatus not available on cookieconsent';
-        }
-      });
-
-      console.log(result);
-      await page.waitForTimeout(2000);
-      return result.startsWith('✅');
-    } catch (err) {
-      console.log("❌ JS error while setting cookie consent:", err.message);
-      await page.screenshot({ path: 'cookie-error.png', fullPage: true });
-      return false;
-    }
-  }
-
-  let cookieAccepted = await attemptCookieConsent();
-  if (!cookieAccepted) {
-    console.log("🔁 JS cookie bypass failed. Reloading and retrying...");
-    await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(5000);
-    cookieAccepted = await attemptCookieConsent();
-  }
-
-  if (!cookieAccepted) {
-    console.log("❌ Failed to accept cookie even after JS retry. Aborting.");
+  try {
+    const result = await page.evaluate(() => {
+      const btn = document.querySelector('#save-and-exit');
+      if (!btn) return '❌ #save-and-exit button not found';
+      const evts = getEventListeners(btn);
+      if (!evts || !evts.click || !evts.click[0]) return '❌ Click event not found';
+      evts.click[0].listener({ type: 'click' });
+      return '✅ Cookie popup handled using internal click listener.';
+    });
+    console.log(result);
+  } catch (err) {
+    console.log(`❌ Cookie handling failed: ${err.message}`);
+    await page.screenshot({ path: 'cookie-handler-error.png', fullPage: true });
     await browser.close();
-    process.exit(1);
+    return;
   }
 
   // ✅ RUN EACH SCRIPT
@@ -120,10 +103,7 @@ const scripts = [
       console.log(`✅ ${script.name} finished successfully.`);
     } catch (err) {
       console.log(`❌ ${script.name} failed: ${err.message}`);
-      await page.screenshot({
-        path: `${script.name.replace(/\s+/g, '_')}-error.png`,
-        fullPage: true,
-      });
+      await page.screenshot({ path: `${script.name.replace(/\s+/g, '_')}-error.png`, fullPage: true });
     }
   }
 
