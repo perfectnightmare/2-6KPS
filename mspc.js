@@ -66,6 +66,10 @@ const scripts = [
     }
   }
 
+  // ✅ WAIT BEFORE COOKIE DISMISSAL
+  console.log("⏳ Waiting 30 seconds after login before handling cookies...");
+  await page.waitForTimeout(30000);
+
   // ✅ COOKIE CONSENT via JS
   console.log("🍪 Clicking #save-and-exit via JS...");
   const clicked = await page.evaluate(() => {
