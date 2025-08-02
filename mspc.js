@@ -1,4 +1,4 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const { chromium } = require('playwright');
 
 // ⬇️ Import all sub-scripts (exported as functions)
@@ -66,16 +66,45 @@ const scripts = [
     }
   }
 
-  // ✅ COOKIE CONSENT (just eval + proceed)
-  try {
-    console.log("🍪 Waiting 30s and attempting cookie popup dismissal...");
-    await page.waitForTimeout(30000);
-    await page.evaluate(() => {
-      document.querySelector('#save-and-exit')?.click();
-    });
-    console.log("🍪 Cookie popup clicked (if it existed).");
-  } catch (err) {
-    console.log(`⚠️ Cookie dismissal attempt failed: ${err.message}`);
+  // ✅ COOKIE CONSENT
+  const cookieSelectors = [
+    '#accept-all-btn',
+    'button:has-text("Accept All")',
+    'button:has-text("Accept")',
+    'button:has-text("Confirm")',
+    'button:has-text("Agree")',
+  ];
+
+  async function attemptCookieConsent() {
+    console.log("🍪 Looking for cookie consent button...");
+    for (const selector of cookieSelectors) {
+      try {
+        const button = await page.waitForSelector(selector, { timeout: 10000 });
+        await page.waitForTimeout(15000);
+        await button.click();
+        console.log(`🍪 Cookie accepted using selector: ${selector}`);
+        await page.waitForTimeout(10000);
+        return true;
+      } catch {
+        console.log(`🔍 Cookie button not found with selector: ${selector}`);
+      }
+    }
+    return false;
+  }
+
+  let cookieAccepted = await attemptCookieConsent();
+  if (!cookieAccepted) {
+    console.log("🔁 Cookie button not found. Refreshing and retrying...");
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForTimeout(5000);
+    cookieAccepted = await attemptCookieConsent();
+  }
+
+  if (!cookieAccepted) {
+    console.log("❌ Failed to accept cookie even after retry. Aborting.");
+    await page.screenshot({ path: 'cookie-error.png', fullPage: true });
+    await browser.close();
+    return;
   }
 
   // ✅ RUN EACH SCRIPT
