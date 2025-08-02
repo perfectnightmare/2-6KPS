@@ -109,7 +109,7 @@ module.exports = async function runBurnEnergy(page) {
       return await res.json();
     }, { duelId: duelRes.duel_id, winnerId: winner });
 
-    console.log(`👑 Judged duel ${duelRes.duel_id} | Winner: ${winner} | Response:`, voteRes);
+    console.log(`👑 Judged duel ${duelRes.duel_id} ✔️`);
   }
 
   console.log("🔷 Starting Beauty Pageant energy burn...");
@@ -180,3 +180,4 @@ module.exports = async function runBurnEnergy(page) {
     console.log(`🚫 Tickets are ${tickets}. Not more than 90. Skipping.`);
   }
 };
+
