@@ -67,115 +67,72 @@ module.exports = async function runBurnEnergy(page) {
   }
 
   // 💅 BEAUTY PAGEANT
-  console.log("🔷 Navigating to Beauty Pageant page...");
-  await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', {
-    waitUntil: 'domcontentloaded',
-    timeout: 60000
-  });
-  await page.waitForTimeout(10000);
-
-  const energySelector = '#header > div.wrapper > div > div.player-panel-middle > div.player-panel-energy > a.player-energy.player-bp-energy > span.player-energy-value';
-  const parseEnergy = async () => parseInt((await page.innerText(energySelector)).trim());
-
-  let blueEnergy = await parseEnergy();
-  const judgeCycles = Math.floor(blueEnergy / 2);
-  console.log(`🔷 You have ${blueEnergy} blue energy. Performing up to ${judgeCycles} judge + vote cycles...`);
-
-  // Step B: Try fixed coordinate
-  let voteCoordinate = null;
-  let coordinateVerified = false;
-
-  async function testFixedCoordinate() {
-    console.log("📌 Testing fixed vote coordinate (345,512)...");
-    await page.click('#judgeButton');
-    await page.waitForTimeout(2000);
-
-    const initialEnergy = await parseEnergy();
-    for (let i = 0; i < 3; i++) {
-      await page.mouse.click(345, 512);
-      await page.waitForTimeout(5000);
-    }
-    const finalEnergy = await parseEnergy();
-    if (finalEnergy < initialEnergy) {
-      voteCoordinate = { x: 345, y: 512 };
-      console.log("✅ Fixed vote coordinate (345,512) confirmed.");
-      return true;
-    } else {
-      console.log("❌ Fixed vote coordinate (345,512) did not reduce energy.");
-      return false;
-    }
+  async function getJudgeCycles() {
+    const energySelector = '#header > div.wrapper > div > div.player-panel-middle > div.player-panel-energy > a.player-energy.player-bp-energy > span.player-energy-value';
+    const blueEnergyText = await page.innerText(energySelector);
+    const blueEnergy = parseInt(blueEnergyText.trim());
+    const judgeCycles = Math.floor(blueEnergy / 2);
+    return { blueEnergy, judgeCycles };
   }
 
-  coordinateVerified = await testFixedCoordinate();
-  if (!coordinateVerified) {
-    console.log("🔄 Retrying coordinate (345,512) after refresh...");
-    await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(10000);
-    coordinateVerified = await testFixedCoordinate();
-  }
+  async function performJudgeCycle() {
+    const duelRes = await page.evaluate(async () => {
+      const res = await fetch('/ajax/beauty_pageant.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'judgeDuel' }),
+        credentials: 'same-origin'
+      });
+      return await res.json();
+    });
 
-  if (!coordinateVerified) {
-    console.log("📍 Falling back to arrow-based vote coordinate detection...");
-    await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(10000);
-
-    try {
-      await page.click('#judgeButton');
-      await page.waitForSelector('#dynamic-info-container > div.judge-panel > div.judge-left', { timeout: 10000 });
-
-      const arrow = await page.$('#dynamic-info-container > div.judge-panel > div.judge-left');
-      const box = await arrow.boundingBox();
-      if (!box) throw new Error("Judge-left arrow not found");
-
-      voteCoordinate = {
-        x: box.x - 100,
-        y: box.y + box.height / 2
-      };
-
-      console.log(`✅ Vote coordinate locked at (${Math.round(voteCoordinate.x)}, ${Math.round(voteCoordinate.y)})`);
-      await page.waitForTimeout(3000);
-    } catch (e) {
-      console.log("❌ Fallback coordinate detection failed: " + e.message);
-      await page.screenshot({ path: 'bp-fallback-error.png', fullPage: true });
+    const matches = [...duelRes.html.matchAll(/<a id="ladyIdContainer-(\d+)"/g)];
+    const id1 = matches?.[0]?.[1];
+    const id2 = matches?.[1]?.[1];
+    if (!duelRes.duel_id || !id1 || !id2) {
+      console.log('❌ Could not parse duel data. Skipping.');
       return;
     }
+
+    const winner = Math.random() < 0.5 ? id1 : id2;
+    const voteRes = await page.evaluate(async (duelId, winnerId) => {
+      const res = await fetch('/ajax/beauty_pageant.php', {
+        method: 'POST',
+        body: new URLSearchParams({
+          action: 'chooseWinner',
+          duel_id: duelId,
+          winner_id: winnerId
+        }),
+        credentials: 'same-origin'
+      });
+      return await res.json();
+    }, duelRes.duel_id, winner);
+
+    console.log(`👑 Judged duel ${duelRes.duel_id} | Winner: ${winner} | Response:`, voteRes);
   }
 
-  // 🔁 Judge + Vote Loop
-  let completed = 0;
-  let lastEnergy = await parseEnergy();
+  console.log("🔷 Starting Beauty Pageant energy burn...");
+  while (true) {
+    await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
+    await page.waitForTimeout(5000);
 
-  while (lastEnergy > 1) {
-    console.log(`👑 Cycle ${completed + 1}: Refreshing and clicking Judge...`);
-    try {
-      await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', {
-        waitUntil: 'domcontentloaded',
-        timeout: 60000
-      });
-      await page.waitForTimeout(5000);
+    const { blueEnergy, judgeCycles } = await getJudgeCycles();
+    console.log(`🔷 You have ${blueEnergy} blue energy. Judge cycles: ${judgeCycles}`);
 
-      await page.waitForSelector('#judgeButton', { timeout: 10000 });
-      await page.click('#judgeButton');
-      console.log("🖱️ Judge clicked.");
+    if (judgeCycles < 1) {
+      console.log("✅ No judge cycles left. Skipping Beauty Pageant judging.");
+      break;
+    }
 
-      for (let i = 0; i < 3; i++) {
-        await page.mouse.click(voteCoordinate.x, voteCoordinate.y);
-        console.log(`🗳️ Vote click ${i + 1} at (${Math.round(voteCoordinate.x)}, ${Math.round(voteCoordinate.y)})`);
-        await page.waitForTimeout(5000);
+    for (let i = 0; i < judgeCycles; i++) {
+      try {
+        await performJudgeCycle();
+        await page.waitForTimeout(3000);
+      } catch (err) {
+        console.log(`⚠️ Judge cycle ${i + 1} failed: ${err.message}`);
       }
-
-      const currentEnergy = await parseEnergy();
-      if (currentEnergy < lastEnergy) {
-        lastEnergy = currentEnergy;
-        completed++;
-        console.log(`✅ Energy dropped. Now: ${currentEnergy}`);
-      } else {
-        console.log("⚠️ Energy did not change after voting. Skipping.");
-      }
-
-    } catch (e) {
-      console.log(`⚠️ Judge cycle ${completed + 1} failed: ${e.message}`);
-      await page.screenshot({ path: `bp-error-${completed + 1}.png`, fullPage: true });
     }
   }
 
@@ -221,4 +178,3 @@ module.exports = async function runBurnEnergy(page) {
     console.log(`🚫 Tickets are ${tickets}. Not more than 90. Skipping.`);
   }
 };
-
