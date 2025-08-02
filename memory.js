@@ -16,7 +16,7 @@ module.exports = async function runMemoryEvent(page) {
   }
 
   console.log("▶️ Clicking start game button...");
-  const startButton = await page.waitForSelector('button.btn-free-reset', { timeout: 30000 });
+  const startButton = await page.waitForSelector('button.btn-free-reset', { timeout: 180000 });
   await page.waitForTimeout(1000);
   await startButton.click({ force: true });
   await page.waitForSelector('.memory-grid-wrapper', { timeout: 30000 });
@@ -128,4 +128,5 @@ module.exports = async function runMemoryEvent(page) {
     console.log(`⚠️ Game incomplete: Matched ${matched.size}/${totalTiles}`);
   }
 };
+
 
