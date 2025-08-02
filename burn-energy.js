@@ -94,7 +94,9 @@ module.exports = async function runBurnEnergy(page) {
     }
 
     const winner = Math.random() < 0.5 ? id1 : id2;
-    const voteRes = await page.evaluate(async (duelId, winnerId) => {
+
+    // ✅ FIXED THIS PART:
+    const voteRes = await page.evaluate(async ({ duelId, winnerId }) => {
       const res = await fetch('/ajax/beauty_pageant.php', {
         method: 'POST',
         body: new URLSearchParams({
@@ -105,7 +107,7 @@ module.exports = async function runBurnEnergy(page) {
         credentials: 'same-origin'
       });
       return await res.json();
-    }, duelRes.duel_id, winner);
+    }, { duelId: duelRes.duel_id, winnerId: winner });
 
     console.log(`👑 Judged duel ${duelRes.duel_id} | Winner: ${winner} | Response:`, voteRes);
   }
