@@ -38,7 +38,7 @@ module.exports = async function runBurnEnergy(page) {
             });
           });
           console.log(`⚔️ Duel ${i + 1}`);
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(100);
         } catch (e) {
           console.log(`⚠️ Duel ${i + 1} failed: ${e.message}`);
           throw e;
@@ -221,3 +221,4 @@ module.exports = async function runBurnEnergy(page) {
     console.log(`🚫 Tickets are ${tickets}. Not more than 90. Skipping.`);
   }
 };
+
