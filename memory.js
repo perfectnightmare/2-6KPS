@@ -2,14 +2,10 @@
 
 module.exports = async function runMemoryEvent(page) {
   const memoryUrl = process.env.LP_MEMORY_URL;
-
+  
   console.log("🌐 Navigating to Memory Event...");
   await page.goto(memoryUrl, { waitUntil: 'domcontentloaded' });
-  for (let i = 0; i < 3; i++) {
-    console.log(`🔄 Refresh ${i + 1}/3`);
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(30000);
-  }
+  await page.waitForTimeout(30000);
 
   const emeraldText = await page.textContent('#player-emeralds');
   const emeralds = parseInt(emeraldText.replace(/\D/g, ''));
@@ -132,3 +128,4 @@ module.exports = async function runMemoryEvent(page) {
     console.log(`⚠️ Game incomplete: Matched ${matched.size}/${totalTiles}`);
   }
 };
+
