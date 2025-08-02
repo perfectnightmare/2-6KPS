@@ -99,12 +99,10 @@ const scripts = [
     await page.waitForTimeout(5000);
     cookieAccepted = await attemptCookieConsent();
   }
-
+  
   if (!cookieAccepted) {
-    console.log("❌ Failed to accept cookie even after retry. Aborting.");
+    console.log("❌ Failed to accept cookie even after retry. Continuing anyway...");
     await page.screenshot({ path: 'cookie-error.png', fullPage: true });
-    await browser.close();
-    return;
   }
 
   // ✅ RUN EACH SCRIPT
@@ -130,3 +128,4 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
