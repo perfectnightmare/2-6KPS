@@ -4,13 +4,13 @@ module.exports = async function runBurnEnergy(page) {
 
   while (arenaEnergy > 0) {
     try {
-      console.log("🟧 Navigating to Fashion Arena...");
-      await page.goto('https://v3.g.ladypopular.com/duels.php', { timeout: 60000 });
+      console.log("🟧 Navigating to BP...");
+      await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', { timeout: 60000 });
 
       for (let i = 1; i <= 3; i++) {
-        console.log(`🔄 Refreshing Fashion Arena page (${i}/3)...`);
+        console.log(`🔄 Refreshing Fashion Arena page (${i}/2)...`);
         await page.reload({ timeout: 30000 });
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       }
 
       const energyText = await page.innerText(
@@ -27,17 +27,37 @@ module.exports = async function runBurnEnergy(page) {
 
       for (let i = 0; i < arenaEnergy; i++) {
         try {
-          await page.click('#challengeLady', { timeout: 5000 });
+          await page.evaluate(() => {
+            return fetch('https://v3.g.ladypopular.com/ajax/arena.php', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: new URLSearchParams({ action: 'challenge' })
+            });
+          });
           console.log(`⚔️ Duel ${i + 1}`);
-          await page.waitForTimeout(1000);
+          await page.waitForTimeout(500);
         } catch (e) {
           console.log(`⚠️ Duel ${i + 1} failed: ${e.message}`);
           throw e;
         }
       }
 
-      console.log("✅ Finished all duels in Fashion Arena.");
-      break;
+      await page.reload({ timeout: 30000 });
+      await page.waitForLoadState('domcontentloaded');
+      const energyAfter = await page.innerText(
+        '#header > div.wrapper > div > div.player-panel-middle > div.player-panel-energy > a.player-energy.player-arena-energy > span.player-energy-value > span'
+      );
+      arenaEnergy = parseInt(energyAfter.trim());
+
+      if (arenaEnergy > 0) {
+        console.log(`🔁 Still ${arenaEnergy} energy left. Repeating duels.`);
+      } else {
+        console.log("✅ Finished all duels in Fashion Arena.");
+        break;
+      }
 
     } catch (err) {
       console.log("🔁 Error occurred. Refreshing page to retry Fashion Arena...");
