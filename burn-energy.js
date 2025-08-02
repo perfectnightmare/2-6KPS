@@ -8,7 +8,7 @@ module.exports = async function runBurnEnergy(page) {
       await page.goto('https://v3.g.ladypopular.com/beauty_pageant.php', { timeout: 60000 });
 
       for (let i = 1; i <= 3; i++) {
-        console.log(`🔄 Refreshing Fashion Arena page (${i}/2)...`);
+        console.log(`🔄 Refreshing Fashion Arena page (${i}/3)...`);
         await page.reload({ timeout: 30000 });
         await page.waitForLoadState('domcontentloaded');
       }
@@ -76,40 +76,48 @@ module.exports = async function runBurnEnergy(page) {
   }
 
   async function performJudgeCycle() {
-    const duelRes = await page.evaluate(async () => {
-      const res = await fetch('/ajax/beauty_pageant.php', {
-        method: 'POST',
-        body: new URLSearchParams({ action: 'judgeDuel' }),
-        credentials: 'same-origin'
-      });
-      return await res.json();
-    });
+    const timeoutMs = 10000;
+    const pollInterval = 500;
+    const startTime = Date.now();
 
-    const matches = [...duelRes.html.matchAll(/<a id="ladyIdContainer-(\d+)"/g)];
-    const id1 = matches?.[0]?.[1];
-    const id2 = matches?.[1]?.[1];
-    if (!duelRes.duel_id || !id1 || !id2) {
-      console.log('❌ Could not parse duel data. Skipping.');
-      return;
+    while (Date.now() - startTime < timeoutMs) {
+      const duelRes = await page.evaluate(async () => {
+        const res = await fetch('/ajax/beauty_pageant.php', {
+          method: 'POST',
+          body: new URLSearchParams({ action: 'judgeDuel' }),
+          credentials: 'same-origin'
+        });
+        return await res.json();
+      });
+
+      const matches = [...duelRes.html.matchAll(/<a id="ladyIdContainer-(\d+)"/g)];
+      const id1 = matches?.[0]?.[1];
+      const id2 = matches?.[1]?.[1];
+
+      if (duelRes.duel_id && id1 && id2) {
+        const winner = Math.random() < 0.5 ? id1 : id2;
+
+        const voteRes = await page.evaluate(async ({ duelId, winnerId }) => {
+          const res = await fetch('/ajax/beauty_pageant.php', {
+            method: 'POST',
+            body: new URLSearchParams({
+              action: 'chooseWinner',
+              duel_id: duelId,
+              winner_id: winnerId
+            }),
+            credentials: 'same-origin'
+          });
+          return await res.json();
+        }, { duelId: duelRes.duel_id, winnerId: winner });
+
+        console.log(`👑 Judged duel ${duelRes.duel_id} ✔️`);
+        return;
+      }
+
+      await page.waitForTimeout(pollInterval);
     }
 
-    const winner = Math.random() < 0.5 ? id1 : id2;
-
-    // ✅ FIXED THIS PART:
-    const voteRes = await page.evaluate(async ({ duelId, winnerId }) => {
-      const res = await fetch('/ajax/beauty_pageant.php', {
-        method: 'POST',
-        body: new URLSearchParams({
-          action: 'chooseWinner',
-          duel_id: duelId,
-          winner_id: winnerId
-        }),
-        credentials: 'same-origin'
-      });
-      return await res.json();
-    }, { duelId: duelRes.duel_id, winnerId: winner });
-
-    console.log(`👑 Judged duel ${duelRes.duel_id} ✔️`);
+    console.log('❌ Timeout: Could not get valid duel data in 10s. Skipping.');
   }
 
   console.log("🔷 Starting Beauty Pageant energy burn...");
@@ -180,4 +188,3 @@ module.exports = async function runBurnEnergy(page) {
     console.log(`🚫 Tickets are ${tickets}. Not more than 90. Skipping.`);
   }
 };
-
