@@ -90,25 +90,32 @@ module.exports = async function runBurnEnergy(page) {
         return await res.json();
       });
 
-      const matches = [...duelRes.html.matchAll(/<a id="ladyIdContainer-(\d+)"/g)];
-      const id1 = matches?.[0]?.[1];
-      const id2 = matches?.[1]?.[1];
+      const matchRegex = /<a id="ladyIdContainer-(\d+)-([^"]+)"/g;
+      const matches = [...duelRes.html.matchAll(matchRegex)];
 
-      if (duelRes.duel_id && id1 && id2) {
-        const winner = Math.random() < 0.5 ? id1 : id2;
+      if (duelRes.duel_id && matches.length === 2) {
+        const id1 = matches[0][1];
+        const gameId1 = matches[0][2];
+        const id2 = matches[1][1];
+        const gameId2 = matches[1][2];
 
-        const voteRes = await page.evaluate(async ({ duelId, winnerId }) => {
+        const pickFirst = Math.random() < 0.5;
+        const winner = pickFirst ? id1 : id2;
+        const winnerGameId = pickFirst ? gameId1 : gameId2;
+
+        const voteRes = await page.evaluate(async ({ duelId, winnerId, winnerGameId }) => {
           const res = await fetch('/ajax/beauty_pageant.php', {
             method: 'POST',
             body: new URLSearchParams({
               action: 'chooseWinner',
               duel_id: duelId,
-              winner_id: winnerId
+              winner_id: winnerId,
+              winner_game_id: winnerGameId
             }),
             credentials: 'same-origin'
           });
           return await res.json();
-        }, { duelId: duelRes.duel_id, winnerId: winner });
+        }, { duelId: duelRes.duel_id, winnerId: winner, winnerGameId });
 
         console.log(`👑 Judged duel ${duelRes.duel_id} ✔️`);
         return;
