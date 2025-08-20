@@ -8,7 +8,7 @@ async function runFurniture(page) {
 
   const ITEM_PRICE = 260;
   const MAX_CART_ITEMS = 100;
-  const MIN_LOOP_DURATION = 45000; // 45 seconds
+  const MIN_LOOP_DURATION = 45000; // 45 seconds.
 
   while (true) {
     console.log('🛒 Navigating to cart page...');
@@ -89,3 +89,4 @@ async function runFurniture(page) {
 }
 
 module.exports = runFurniture;
+
