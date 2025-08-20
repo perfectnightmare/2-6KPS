@@ -6,7 +6,7 @@ on:
 jobs:
   run-mspc:
     runs-on: ubuntu-22.04
-    # runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest (optional)
     timeout-minutes: 27
 
     steps:
