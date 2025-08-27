@@ -6,7 +6,7 @@ on:
 jobs:
   run-mspc:
     runs-on: ubuntu-22.04
-    # runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest (optional)
     timeout-minutes: 27
 
     steps:
@@ -18,8 +18,26 @@ jobs:
         with:
           node-version: '22'
 
+      # 🟢 Cache node_modules
+      - name: Cache Node.js dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: 📦 Install dependencies
         run: npm install
+
+      # 🟢 Cache Playwright browsers
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: 🌐 Install Playwright browsers
         run: npx playwright install --with-deps

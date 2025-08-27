@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
 
-// ⬇️ Import all sub-scripts (exported as functions)
+// ⬇️ Import all sub-scripts (exported as functions)..
 const runBurnEnergy = require('./burn-energy.js');
 const runTeleportEvent = require('./tele.js');
 const runMapsEvent = require('./maps.js');
@@ -128,4 +128,5 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
 
