@@ -7,7 +7,7 @@ module.exports = async function runMapsEvent(page) {
   console.log("🗺️ Navigating to Maps Event...");
   await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 1; i++) {
     console.log(`🔄 Refreshing Maps Event page (${i}/3)...`);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(60000);
@@ -51,3 +51,4 @@ module.exports = async function runMapsEvent(page) {
 
   console.log(`🏁 Maps complete. Total clicks: ${successfulClicks}`);
 };
+
