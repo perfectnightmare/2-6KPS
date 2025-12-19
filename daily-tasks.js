@@ -1,11 +1,11 @@
 /**
  * daily-tasks.js
  * Collects Type 1 (7 daily tasks) and Type 2 (3 daily chests)
- * Fully Playwright-compatible
+ * Debug version: grabs all Type 2 chests regardless of status
  */
 
 module.exports = async function runDailyTasks(page) {
-  console.log("📋 Daily Tasks Automation — Type 1 & Type 2");
+  console.log("📋 Daily Tasks Automation — Type 1 & Type 2 (Debug)");
 
   // ----------------------------
   // PHASE 1: Fetch Daily Tasks popup
@@ -51,22 +51,23 @@ module.exports = async function runDailyTasks(page) {
   console.log("✅ Type 1 claimable tasks:", type1Tasks);
 
   // ----------------------------
-  // PHASE 1B: Extract Type 2 chests
+  // PHASE 1B: Extract all Type 2 chests (debug)
   // ----------------------------
-  const type2Chests = await page.evaluate(() => {
-    const chests = [...document.querySelectorAll('.daily-chest.semi-opened')];
+  const type2ChestsAll = await page.evaluate(() => {
+    const chests = [...document.querySelectorAll('.daily-chest')];
     return chests.map(chest => {
       const index = Number(chest.dataset.chestIndex);
       return {
         quest_id: chest.dataset.quest,
         chest_index: index,
         chest_id: index + 1, // backend expects 1,2,3
+        className: chest.className, // include class for debugging
         required_keys: Number(chest.dataset.requiredKeys)
       };
     });
   });
 
-  console.log("✅ Type 2 claimable chests:", type2Chests);
+  console.log("📦 All Type 2 chests (debug):", type2ChestsAll);
 
   // ----------------------------
   // PHASE 2A: Claim Type 1 tasks
@@ -84,7 +85,7 @@ module.exports = async function runDailyTasks(page) {
           body: new URLSearchParams({
             type: "giveDailyQuestReward",
             quest_id,
-            chest_id: -1 // constant for Type 1 tasks
+            chest_id: -1
           })
         });
         return await res.json();
@@ -98,9 +99,9 @@ module.exports = async function runDailyTasks(page) {
   }
 
   // ----------------------------
-  // PHASE 2B: Claim Type 2 chests
+  // PHASE 2B: Claim all Type 2 chests (debug)
   // ----------------------------
-  for (const chest of type2Chests) {
+  for (const chest of type2ChestsAll) {
     try {
       const result = await page.evaluate(async ({ quest_id, chest_id }) => {
         const res = await fetch("/ajax/battlepass/quests.php", {
@@ -119,12 +120,12 @@ module.exports = async function runDailyTasks(page) {
         return await res.json();
       }, { quest_id: chest.quest_id, chest_id: chest.chest_id });
 
-      console.log(`🎉 Claimed Type 2 chest ${chest.chest_id} (quest_id ${chest.quest_id})`, result);
+      console.log(`🎉 Tried claiming chest ${chest.chest_id} (class: ${chest.className})`, result);
       await page.waitForTimeout(1200);
     } catch (err) {
-      console.error(`❌ Failed claiming Type 2 chest ${chest.chest_id} (quest_id ${chest.quest_id})`, err);
+      console.error(`❌ Failed claiming chest ${chest.chest_id} (quest_id ${chest.quest_id})`, err);
     }
   }
 
-  console.log("🏁 Daily Tasks Automation Complete — Type 1 & Type 2");
+  console.log("🏁 Daily Tasks Automation Complete — Type 1 & Type 2 (Debug)");
 };
