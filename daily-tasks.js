@@ -73,7 +73,8 @@ module.exports = async function runDailyTasks(page) {
         return await res.json();
       }, { quest_id: task.quest_id });
 
-      console.log(`✅ Claimed Type 1 task ${task.quest_id}`, result);
+      // console.log(`✅ Claimed Type 1 task ${task.quest_id}`, result);   --- old, long console long
+      console.log(`✅ Claimed Type 1 task [${task.quest_id}] "${task.title}" → battlepass_keys: ${task.battlepass_keys}, status: ${result.status}`);
       await page.waitForTimeout(1000);
     } catch (err) {
       console.error(`❌ Failed claiming Type 1 task ${task.quest_id}`, err);
@@ -108,7 +109,8 @@ module.exports = async function runDailyTasks(page) {
         return await res.json();
       }, { quest_id: chest.quest_id, chest_id: chest.chest_id });
 
-      console.log(`🎉 Claimed Type 2 chest ${chest.chest_id} (quest_id ${chest.quest_id})`, result);
+      // console.log(`🎉 Claimed Type 2 chest ${chest.chest_id} (quest_id ${chest.quest_id})`, result); ----- old, log console message
+      console.log(`🎉 Claimed Type 2 chest [${chest.quest_id}] chest_id: ${chest.chest_id}, status: ${result.status}`);
       await page.waitForTimeout(1200);
     } catch (err) {
       console.error(`❌ Failed claiming Type 2 chest ${chest.chest_id} (quest_id ${chest.quest_id})`, err);
