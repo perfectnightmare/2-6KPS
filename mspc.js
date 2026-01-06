@@ -10,6 +10,7 @@ const runMemoryEvent = require('./memory.js');
 const runFurnitureScript = require('./furniture.js');
 const runStatsExtractor = require('./stats.js');
 const runDailyTasks = require('./daily-tasks.js');
+const runBoyfriendKiss = require('./bfk.js');
 
 const scripts = [
   { name: 'Burn Energy', fn: runBurnEnergy, alwaysRun: true },
@@ -20,6 +21,7 @@ const scripts = [
   { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: true },
   { name: 'Stats Extractor', fn: runStatsExtractor, alwaysRun: true },
   { name: 'Daily Tasks', fn: runDailyTasks, alwaysRun: true },
+  { name: 'Boyfriend Kiss', fn: runBoyfriendKiss, alwaysRun: true },
 ];
 
 (async () => {
@@ -130,6 +132,7 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
 
 
 
