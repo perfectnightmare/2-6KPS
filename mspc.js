@@ -11,6 +11,7 @@ const runFurnitureScript = require('./furniture.js');
 const runStatsExtractor = require('./stats.js');
 const runDailyTasks = require('./daily-tasks.js');
 const runBoyfriendKiss = require('./bfk.js');
+const runGuildShow = require('./guild-show.js');
 
 const scripts = [
   { name: 'Burn Energy', fn: runBurnEnergy, alwaysRun: true },
@@ -22,6 +23,7 @@ const scripts = [
   { name: 'Stats Extractor', fn: runStatsExtractor, alwaysRun: true },
   { name: 'Daily Tasks', fn: runDailyTasks, alwaysRun: true },
   { name: 'Boyfriend Kiss', fn: runBoyfriendKiss, alwaysRun: true },
+  { name: 'Guild Show', fn: runGuildShow, alwaysRun: true },
 ];
 
 (async () => {
@@ -132,6 +134,7 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
 
 
 
