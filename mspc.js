@@ -12,6 +12,7 @@ const runStatsExtractor = require('./stats.js');
 const runDailyTasks = require('./daily-tasks.js');
 const runBoyfriendKiss = require('./bfk.js');
 const runGuildShow = require('./guild-show.js');
+const runPetTraining = require('./pet-train.js');
 
 const scripts = [
   { name: 'Burn Energy', fn: runBurnEnergy, alwaysRun: true },
@@ -19,11 +20,12 @@ const scripts = [
   { name: 'Maps Event', fn: runMapsEvent, envKey: 'LP_MAPS_URL' },
   { name: 'Slots Event', fn: runSlotsEvent, envKey: 'LP_SLOTS_URL' },
   { name: 'Memory Event', fn: runMemoryEvent, envKey: 'LP_MEMORY_URL' },
-  { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: true },
+  { name: 'Furniture Script', fn: runFurnitureScript, alwaysRun: false },
   { name: 'Stats Extractor', fn: runStatsExtractor, alwaysRun: true },
   { name: 'Daily Tasks', fn: runDailyTasks, alwaysRun: true },
   { name: 'Boyfriend Kiss', fn: runBoyfriendKiss, alwaysRun: true },
   { name: 'Guild Show', fn: runGuildShow, alwaysRun: true },
+  { name: 'Pet Training', fn: runPetTraining, alwaysRun: true },
 ];
 
 (async () => {
@@ -134,6 +136,9 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
+
+
 
 
 
