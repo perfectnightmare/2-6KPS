@@ -45,7 +45,7 @@ module.exports = async function runPetTraining(page) {
 
     console.log("✅ No cooldown detected.");
 
-    // 🔍 STEP 3: Get training cost
+    // 🔍 STEP 3: Get training cost (for logging only)
     const trainingCost = await activePet.evaluate(pet => {
       const btn = pet.querySelector('#trainPet');
       return btn ? parseInt(btn.dataset.price) : NaN;
@@ -58,18 +58,7 @@ module.exports = async function runPetTraining(page) {
 
     console.log(`💰 Training cost: ${trainingCost} dollars`);
 
-    // 🔍 STEP 4: Get player dollars
-    const playerDollarsText = await page.innerText('#player-dollars');
-    const playerDollars = parseInt(playerDollarsText.replace(/,/g, ''));
-
-    console.log(`💵 Your balance: ${playerDollars} dollars`);
-
-    if (playerDollars < trainingCost) {
-      console.log("🚫 Not enough dollars to train pet. Skipping.");
-      return;
-    }
-
-    // 🚀 STEP 5: Train pet via internal request
+    // 🚀 STEP 4: Train pet via internal request
     console.log("🎯 Training pet (internal request)...");
 
     const response = await page.evaluate(async petId => {
@@ -87,9 +76,9 @@ module.exports = async function runPetTraining(page) {
       return res.json();
     }, petIdNumber);
 
-    // ✅ STEP 6: Handle response
+    // ✅ STEP 5: Handle response
     if (response?.status === 1) {
-      console.log(`🎉 Pet trained successfully!`);
+      console.log("🎉 Pet trained successfully!");
       console.log(`📈 New Loyalty: ${response.info?.newLoyalty}`);
       console.log(`🔒 Cooldown started: ${response.info?.lockTime} seconds`);
     } else {
