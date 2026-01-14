@@ -13,6 +13,7 @@ const runDailyTasks = require('./daily-tasks.js');
 const runBoyfriendKiss = require('./bfk.js');
 const runGuildShow = require('./guild-show.js');
 const runPetTraining = require('./pet-train.js');
+const runBridesmaidsTasks = require('./bridesmaids.js');
 
 const scripts = [
   { name: 'Burn Energy', fn: runBurnEnergy, alwaysRun: true },
@@ -26,6 +27,7 @@ const scripts = [
   { name: 'Boyfriend Kiss', fn: runBoyfriendKiss, alwaysRun: true },
   { name: 'Guild Show', fn: runGuildShow, alwaysRun: true },
   { name: 'Pet Training', fn: runPetTraining, alwaysRun: true },
+  { name: 'Bridesmaids Tasks', fn: runBridesmaidsTasks, alwaysRun: false },
 ];
 
 (async () => {
@@ -136,6 +138,7 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
 
 
 
