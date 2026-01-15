@@ -27,7 +27,7 @@ const scripts = [
   { name: 'Boyfriend Kiss', fn: runBoyfriendKiss, alwaysRun: true },
   { name: 'Guild Show', fn: runGuildShow, alwaysRun: true },
   { name: 'Pet Training', fn: runPetTraining, alwaysRun: true },
-  { name: 'Bridesmaids Tasks', fn: runBridesmaidsTasks, alwaysRun: false },
+  { name: 'Bridesmaids Tasks', fn: runBridesmaidsTasks, alwaysRun: true },
 ];
 
 (async () => {
@@ -138,6 +138,7 @@ const scripts = [
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
 
 
 
