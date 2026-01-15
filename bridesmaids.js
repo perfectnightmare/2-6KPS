@@ -2,7 +2,7 @@ module.exports = async function runBridesmaidsTasks(page) {
   // ============================
   // 🔧 MANUAL CONFIG
   // ============================
-  const PARTY_ID = 2816; // <-- update manually when party changes
+  const PARTY_ID = 3316; // <-- update manually when party changes
   const TASK_1_URL = `https://v3.g.ladypopular.com/party/center/planning.php?bridesmaid_party_id=${PARTY_ID}`;
 
   console.log("👰 Starting Bridesmaids Tasks...");
