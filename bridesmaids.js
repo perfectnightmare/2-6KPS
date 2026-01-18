@@ -2,10 +2,9 @@ module.exports = async function runBridesmaids(page) {
   // =========================
   // 🔧 CONFIG
   // =========================
-  const PARTY_ID = 2816; // ⬅️ update manually when party changes
-  const BASE_URL = 'https://v3.g.ladypopular.com/party/center/planning.php';
-
-  const TARGET_URL = `${BASE_URL}?bridesmaid_party_id=${PARTY_ID}`;
+  const PARTY_ID = 2816;
+  const TARGET_URL =
+    `https://v3.g.ladypopular.com/party/center/planning.php?bridesmaid_party_id=${PARTY_ID}`;
 
   console.log(`👰 Bridesmaids script started (Party ID: ${PARTY_ID})`);
 
@@ -16,33 +15,25 @@ module.exports = async function runBridesmaids(page) {
     waitUntil: 'domcontentloaded',
     timeout: 60000,
   });
-  await page.waitForTimeout(5000);
+
+  await page.waitForTimeout(4000);
 
   // =========================
-  // 🔍 DETERMINE ACTIVE TASK
+  // 🔍 DETECT ACTIVE TASK (CONTENT-BASED)
   // =========================
-  const inactiveCount = await page.$$eval(
-    '.party-center-menu-item.inactive',
-    els => els.length
-  );
+  const isBouquetTask = await page.$('.shine-box.bouquets');
+  const isSouvenirTask = await page.$('.shine-box.souvenirs');
 
-  console.log(`🔍 Inactive task count: ${inactiveCount}`);
-
-  // Mapping:
-  // 3 inactive → Task 1 active
-  // 2 inactive → Task 2 active
-  // 1 or 0 inactive → skip everything
-
-  if (inactiveCount >= 1 && inactiveCount <= 0) {
-    console.log('⏭️ No relevant bridesmaid tasks active. Skipping.');
+  if (!isBouquetTask && !isSouvenirTask) {
+    console.log('⏭️ No bridesmaids task detected. Skipping.');
     return;
   }
 
-  // =========================
+  // ==================================================
   // 🌸 TASK 1 — BOUQUETS
-  // =========================
-  if (inactiveCount === 3) {
-    console.log('🌸 Task 1 active: Collect Bouquet');
+  // ==================================================
+  if (isBouquetTask) {
+    console.log('🌸 Bouquet task detected');
 
     const bouquetIds = await page.$$eval('.gb_bouquet', els =>
       els.map(el => el.getAttribute('rel')).filter(Boolean)
@@ -53,43 +44,49 @@ module.exports = async function runBridesmaids(page) {
       return;
     }
 
+    // As per your rule: ONE request only
     const bouquetId = bouquetIds[0];
     console.log(`🌼 Attempting bouquet ID: ${bouquetId}`);
 
-    const response = await page.evaluate(async ({ partyId, bouquetId }) => {
-      const res = await fetch(
-        'https://v3.g.ladypopular.com/ajax/party/planning/bridesmaids.php',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: new URLSearchParams({
-            party_id: partyId,
-            action: 'getBouquet',
-            bouquet_id: bouquetId,
-          }),
-          credentials: 'same-origin',
-        }
-      );
-      return res.json();
-    }, { partyId: PARTY_ID, bouquetId });
+    const response = await page.evaluate(
+      async ({ partyId, bouquetId }) => {
+        const res = await fetch(
+          'https://v3.g.ladypopular.com/ajax/party/planning/bridesmaids.php',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new URLSearchParams({
+              party_id: partyId,
+              action: 'getBouquet',
+              bouquet_id: bouquetId,
+            }),
+            credentials: 'same-origin',
+          }
+        );
+        return res.json();
+      },
+      { partyId: PARTY_ID, bouquetId }
+    );
 
     if (response.status === 1) {
       console.log(`✅ Bouquet ${bouquetId} collected successfully.`);
     } else {
-      console.log(`⏳ Bouquet cooldown active: ${response.message || 'Cooldown'}`);
+      console.log(
+        `⏳ Bouquet cooldown / error: ${response.message || 'Unknown'}`
+      );
     }
 
-    return; // Task 1 ends after one attempt
+    return;
   }
 
-  // =========================
+  // ==================================================
   // 🎁 TASK 2 — SOUVENIRS
-  // =========================
-  if (inactiveCount === 2) {
-    console.log('🎁 Task 2 active: Souvenirs');
+  // ==================================================
+  if (isSouvenirTask) {
+    console.log('🎁 Souvenir task detected');
 
     const hasStartButton = await page.$(
       'button[onclick="startMakingSouvenir()"]'
@@ -99,17 +96,21 @@ module.exports = async function runBridesmaids(page) {
     );
     const hasProgressBar = await page.$('.progressbar-wrap');
 
-    // -------- STATE 2: COOLDOWN --------
+    // ---------------------------
+    // STATE 2 — COOLDOWN ACTIVE
+    // ---------------------------
     if (hasProgressBar && !hasFinishButton) {
-      console.log('⏳ Souvenir cooldown active. Skipping.');
+      console.log('⏳ Souvenir is currently in cooldown. Skipping.');
       return;
     }
 
-    // -------- STATE 1: START MAKING --------
+    // ---------------------------
+    // STATE 1 — START MAKING
+    // ---------------------------
     if (hasStartButton && !hasFinishButton) {
       console.log('▶️ Starting souvenir...');
 
-      const res = await page.evaluate(async partyId => {
+      const startRes = await page.evaluate(async partyId => {
         const r = await fetch(
           'https://v3.g.ladypopular.com/ajax/party/planning/bridesmaids.php',
           {
@@ -128,16 +129,18 @@ module.exports = async function runBridesmaids(page) {
         return r.json();
       }, PARTY_ID);
 
-      if (res.status === 1) {
+      if (startRes.status === 1) {
         console.log('✅ Souvenir started successfully.');
       } else {
-        console.log('⚠️ Failed to start souvenir.', res);
+        console.log('⚠️ Failed to start souvenir.', startRes);
       }
 
       return;
     }
 
-    // -------- STATE 3: FINISH & RESTART --------
+    // ---------------------------
+    // STATE 3 — FINISH + RESTART
+    // ---------------------------
     if (hasFinishButton) {
       console.log('🏁 Finishing souvenir...');
 
@@ -160,11 +163,11 @@ module.exports = async function runBridesmaids(page) {
         return r.json();
       }, PARTY_ID);
 
-      console.log(
-        finishRes.status === 1
-          ? '🎉 Souvenir completed.'
-          : '⚠️ Souvenir may be ruined, continuing anyway.'
-      );
+      if (finishRes.status === 1) {
+        console.log('🎉 Souvenir finished successfully.');
+      } else {
+        console.log('⚠️ Souvenir may be ruined, continuing anyway.');
+      }
 
       console.log('🔄 Starting new souvenir...');
 
@@ -188,7 +191,7 @@ module.exports = async function runBridesmaids(page) {
       }, PARTY_ID);
 
       if (startRes.status === 1) {
-        console.log('✅ New souvenir started.');
+        console.log('✅ New souvenir started successfully.');
       } else {
         console.log('⚠️ Failed to start new souvenir.', startRes);
       }
@@ -196,6 +199,6 @@ module.exports = async function runBridesmaids(page) {
       return;
     }
 
-    console.log('❓ Unknown souvenir state. Skipping.');
+    console.log('❓ Unknown souvenir state detected. Skipping.');
   }
 };
