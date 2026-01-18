@@ -6,7 +6,7 @@ module.exports = async function runBridesmaids(page) {
   const TARGET_URL =
     `https://v3.g.ladypopular.com/party/center/planning.php?bridesmaid_party_id=${PARTY_ID}`;
 
-  console.log(`👰 Bridesmaids script started (Party ID: ${PARTY_ID})`);
+  console.log(`👰 Bridesmaids script started`);
 
   // =========================
   // 🌐 LOAD PAGE
