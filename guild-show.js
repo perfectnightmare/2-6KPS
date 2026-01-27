@@ -46,6 +46,6 @@ module.exports = async function runGuildShow(page) {
     console.log(`✅ Successfully joined position ${position}`);
     console.log(`⏳ Cooldown left: ${response.details?.lady_cooldown_time_left}s`);
   } else {
-    console.log(`⚠️ Join failed | status=${response?.status} | cooldown=${response?.details?.lady_cooldown_time_left ?? 'n/a'}`);
+    console.log(`⚠️ Join failed: ${response?.message ?? 'Unknown reason'}`);
   }
 };
