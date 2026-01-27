@@ -2,6 +2,7 @@ require('dotenv').config();
 const { chromium } = require('playwright');
 
 // ⬇️ Import all sub-scripts (exported as functions)..
+const DIVIDER = '────────────────────────────────────────────────────────────────────────────────';
 const runBurnEnergy = require('./burn-energy.js');
 const runTeleportEvent = require('./tele.js');
 const runMapsEvent = require('./maps.js');
@@ -88,14 +89,17 @@ const scripts = [
     try {
       await script.fn(page); // Call the script function with shared page
       console.log(`✅ ${script.name} finished successfully.`);
+      console.log(DIVIDER);
     } catch (err) {
       console.log(`❌ ${script.name} failed: ${err.message}`);
       await page.screenshot({ path: `${script.name.replace(/\s+/g, '_')}-error.png`, fullPage: true });
+      console.log(DIVIDER);
     }
   }
 
   await browser.close();
   console.log(`\n🎉 All scripts done. Browser closed.`);
 })();
+
 
 
