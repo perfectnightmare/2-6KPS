@@ -2,7 +2,7 @@ module.exports = async function runBridesmaids(page) {
   // =========================
   // 🔧 CONFIG
   // =========================
-  const PARTY_ID = 3316;
+  const PARTY_ID = 6890;
   const TARGET_URL =
     `https://v3.g.ladypopular.com/party/center/planning.php?bridesmaid_party_id=${PARTY_ID}`;
 
